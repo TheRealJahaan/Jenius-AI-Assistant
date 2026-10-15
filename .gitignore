@@ -1,0 +1,16 @@
+# Operating System
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.env
+venv/
+env/
+
+# Temp files
+qr_base64.txt
+index_old_backup.html

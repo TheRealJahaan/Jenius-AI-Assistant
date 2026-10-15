@@ -1,0 +1,16 @@
+{
+  "reproducibility": {
+    "pass": true,
+    "hashes": [
+      "37c4118c2fc511f3",
+      "37c4118c2fc511f3",
+      "37c4118c2fc511f3"
+    ]
+  },
+  "correctness": {
+    "passed": 5,
+    "total": 5,
+    "failures": []
+  },
+  "overall_score_pct": 100.0
+}
