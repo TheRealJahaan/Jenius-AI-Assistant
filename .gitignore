@@ -1,16 +1,24 @@
-# Operating System
+# OS
 .DS_Store
 Thumbs.db
 
 # Python
 __pycache__/
 *.py[cod]
-*$py.class
-*.so
-.env
+*.egg-info/
+.venv/
 venv/
-env/
+.env
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+build/
+dist/
 
-# Temp files
-qr_base64.txt
-index_old_backup.html
+# Node
+node_modules/
+
+# Generated reports (the committed golden copy lives in tests/golden/)
+out/

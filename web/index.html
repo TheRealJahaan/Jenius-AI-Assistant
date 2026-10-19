@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Jenius · Freight Cost Intelligence</title>
+  <meta name="description" content="Deterministic freight-cost anomaly detection with a grounded assistant. Every flag traces back to the data.">
+  <meta name="theme-color" content="#0b0b12">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <script>
+    try { const t = localStorage.getItem("jenius-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+  </script>
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="topbar">
+    <a class="brand" href="#top" aria-label="Jenius home">
+      <span class="brand-badge" aria-hidden="true">J</span>
+      <span>Jenius</span>
+    </a>
+    <nav class="nav" aria-label="Sections">
+      <a href="#anomalies">Anomalies</a>
+      <a href="#explorer">Explorer</a>
+      <a href="#assistant">Assistant</a>
+      <a href="#method">Method</a>
+    </nav>
+    <div class="topbar-actions">
+      <button class="icon-btn" id="themeToggle" type="button" aria-label="Toggle light or dark theme">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.39 5.39 0 0 1-4.4 2.26 5.4 5.4 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1Z"/></svg>
+      </button>
+      <a class="btn btn-ghost" href="https://github.com/TheRealJahaan/Jenius-AI-Assistant" target="_blank" rel="noopener">
+        <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+        <span>Source</span>
+      </a>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero" id="top">
+      <p class="eyebrow"><span class="pulse" aria-hidden="true"></span>Deterministic · zero LLM calls · every claim traceable</p>
+      <h1>Freight cost spikes, <span class="grad">explained.</span></h1>
+      <p class="lede">
+        Jenius scans every route-week of shipment data, flags costs that beat both the route's own history
+        and its peers, then checks the field notes to tell a justified spike from one that needs a human.
+      </p>
+      <div class="kpis" id="kpis" aria-live="polite">
+        <div class="kpi skeleton"></div><div class="kpi skeleton"></div><div class="kpi skeleton"></div><div class="kpi skeleton"></div>
+      </div>
+    </section>
+
+    <section class="panel" id="anomalies" aria-labelledby="anomalies-title">
+      <div class="panel-head">
+        <div>
+          <h2 id="anomalies-title">Flagged route-weeks</h2>
+          <p class="muted" id="ruleText">Weeks that beat both thresholds.</p>
+        </div>
+        <div class="controls" role="group" aria-label="Detection thresholds">
+          <label class="slider">
+            <span>vs own history <output id="ownOut">15%</output></span>
+            <input type="range" id="ownRange" min="5" max="40" step="1" value="15">
+          </label>
+          <label class="slider">
+            <span>vs similar routes <output id="peerOut">15%</output></span>
+            <input type="range" id="peerRange" min="5" max="40" step="1" value="15">
+          </label>
+          <button type="button" class="btn btn-ghost btn-sm" id="resetThresholds">Reset</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="downloadCsv">Download CSV</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="anomaly-table">
+          <thead>
+            <tr>
+              <th scope="col">Route</th>
+              <th scope="col">Week of</th>
+              <th scope="col" class="num">₹ / t-km</th>
+              <th scope="col" class="num">vs own</th>
+              <th scope="col" class="num">vs peers</th>
+              <th scope="col">Verdict</th>
+            </tr>
+          </thead>
+          <tbody id="anomalyRows"></tbody>
+        </table>
+      </div>
+      <div class="detail" id="detail" hidden></div>
+    </section>
+
+    <section class="panel" id="explorer" aria-labelledby="explorer-title">
+      <div class="panel-head">
+        <div>
+          <h2 id="explorer-title">Route explorer</h2>
+          <p class="muted">Weekly cost per tonne-km against the two baselines. Hover or use arrow keys to inspect a week.</p>
+        </div>
+        <div class="chips" id="routeChips" role="tablist" aria-label="Route"></div>
+      </div>
+      <div class="legend" aria-hidden="false">
+        <span><i class="sw line-actual"></i>This route</span>
+        <span><i class="sw line-baseline"></i>Trailing 8-week baseline</span>
+        <span><i class="sw line-peers"></i>Similar routes, same week</span>
+        <span><i class="dot mark-review"></i>Needs review</span>
+        <span><i class="dot mark-justified"></i>Justified by a note</span>
+      </div>
+      <div class="chart" id="chart"></div>
+      <div class="route-stats" id="routeStats"></div>
+    </section>
+
+    <section class="panel" id="assistant" aria-labelledby="assistant-title">
+      <div class="panel-head">
+        <div>
+          <h2 id="assistant-title">Ask the data</h2>
+          <p class="muted">Answers are assembled from the computed facts and quoted notes, never generated, so they can't hallucinate.</p>
+        </div>
+        <span class="status-pill" id="engineStatus">Engine: in-browser</span>
+      </div>
+      <div class="chat">
+        <div class="chat-log" id="chatLog" aria-live="polite"></div>
+        <div class="quick" id="quickPrompts"></div>
+        <form class="chat-form" id="chatForm" autocomplete="off">
+          <label for="chatInput" class="visually-hidden">Your question</label>
+          <input id="chatInput" maxlength="500" placeholder="e.g. Why did Chennai-Bangalore get pricier in February 2025?">
+          <button class="btn btn-primary" type="submit">Ask</button>
+        </form>
+      </div>
+    </section>
+
+    <section class="panel" id="method" aria-labelledby="method-title">
+      <h2 id="method-title">How a week gets flagged</h2>
+      <ol class="steps">
+        <li><b>Normalise.</b> Each shipment becomes cost per tonne-km: freight ÷ (tonnes × km). Shipments roll up to a weekly mean per route.</li>
+        <li><b>Compare twice.</b> Against the route's trailing 8-week average (strictly earlier weeks only) and against other routes of the same length band that same week.</li>
+        <li><b>Require both.</b> A market-wide diesel hike lifts every route, so it fails the peer test. A noisy route fails its own-history test. Only spikes that beat both survive.</li>
+        <li><b>Explain or escalate.</b> Field notes within 60 days that apply to the route are scored for cost-driver language minus resolution language. A positive net score justifies the spike; otherwise it goes to a human.</li>
+      </ol>
+      <p class="muted small" id="footnote"></p>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>Built by Jahaan Suthar</span>
+    <span id="buildInfo"></span>
+  </footer>
+</body>
+</html>

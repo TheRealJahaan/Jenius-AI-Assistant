@@ -1,9 +1,0 @@
-{
-  "model": "None (TF-IDF retrieval + structured data \u2014 no LLM)",
-  "llm_calls": 0,
-  "input_tokens": 0,
-  "output_tokens": 0,
-  "estimated_cost_usd": "$0.00",
-  "session_queries": 1,
-  "note": "The assistant uses TF-IDF cosine similarity for note retrieval and structured data for answer generation. Zero LLM API calls are made. This ensures full reproducibility and zero cost."
-}

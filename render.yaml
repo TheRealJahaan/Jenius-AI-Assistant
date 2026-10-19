@@ -1,0 +1,8 @@
+# One-click deploy: https://render.com/deploy?repo=https://github.com/TheRealJahaan/Jenius-AI-Assistant
+services:
+  - type: web
+    name: jenius
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/health
+    autoDeploy: true

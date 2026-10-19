@@ -1,0 +1,12 @@
+{
+  "name": "jenius-web",
+  "private": true,
+  "type": "module",
+  "description": "Static dashboard and in-browser assistant for Jenius",
+  "scripts": {
+    "test": "node --test \"tests/js/*.test.mjs\""
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
