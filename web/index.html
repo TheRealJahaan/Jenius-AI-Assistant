@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jenius — Freight Cost Intelligence</title>
+  <meta name="description" content="Jenius finds the weeks your freight costs spiked, checks them against your operations notes, and answers questions about your shipments in plain English.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%236C63FF'/><text x='50%' y='68%' font-size='56' font-family='sans-serif' font-weight='900' fill='white' text-anchor='middle'>J</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css?v=3.0.0">
+  <script src="/static/app.js?v=3.0.0" defer></script>
+</head>
+<body>
+  <div class="ambient-glow glow-top-left"></div>
+  <div class="ambient-glow glow-bottom-right"></div>
+
+  <header class="navbar">
+    <div class="nav-brand" data-page="landing">
+      <div class="brand-badge">J</div>
+      <span>Jenius</span>
+    </div>
+    <nav class="nav-menu">
+      <span class="nav-link" data-page="landing">Product</span>
+      <span class="nav-link" data-page="assistant">AI Assistant</span>
+      <span class="nav-link" data-page="pricing">Pricing</span>
+      <span class="nav-link hidden" data-page="admin" id="navAdmin">Admin</span>
+    </nav>
+    <div class="nav-actions">
+      <span id="navGuest">
+        <button class="btn btn-ghost" data-page="login">Log In</button>
+        <button class="btn btn-primary" data-page="signup">Start Free →</button>
+      </span>
+      <span id="navUser" class="hidden">
+        <button class="btn btn-ghost" data-page="account" id="navAccountBtn">Account</button>
+      </span>
+    </div>
+  </header>
+
+  <main class="page-container">
+
+    <!-- ═════════════ LANDING ═════════════ -->
+    <section class="page-view" id="view-landing">
+      <div class="hero-wrap">
+        <div class="hero-badge"><span class="hero-badge-dot"></span> Freight cost intelligence for Indian logistics teams</div>
+        <h1 class="hero-title">The Future of <span class="typewriter-word" id="typewriterWord">Intelligence</span></h1>
+        <p class="hero-sub">
+          Upload your shipment records. Jenius finds the route-weeks where cost per tonne-km jumped,
+          checks each one against your operations notes, and answers your questions in plain English.
+        </p>
+        <div class="hero-actions">
+          <button class="btn btn-primary" data-page="signup">Start Free →</button>
+          <button class="btn btn-ghost" data-page="assistant">Try the live demo</button>
+        </div>
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon">📈</div>
+            <h3>Spikes, not noise</h3>
+            <p>A week is flagged only when it beats both the route's own 8-week history and similar routes by 15%, so market-wide changes don't bury you in alerts.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🧠</div>
+            <h3>An analyst that shows its work</h3>
+            <p>Ask "why did Chennai-Bangalore get pricier in February?" Claude looks up the numbers and notes in your data and cites them. It never makes figures up.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🔒</div>
+            <h3>Your data stays yours</h3>
+            <p>Only you can see your uploads. Passwords are hashed with Argon2, sessions can't be replayed from a database leak, and you can delete everything anytime.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═════════════ LOGIN ═════════════ -->
+    <section class="page-view" id="view-login">
+      <div class="login-container">
+        <div class="login-art">
+          <div class="orb-circle"></div>
+          <h2>Welcome back to Jenius</h2>
+          <div class="quote-box">📦 Upload shipments and context notes as CSV</div>
+          <div class="quote-box">🔍 See which cost spikes are explained and which need a look</div>
+          <div class="quote-box">💬 Ask follow-up questions in plain English</div>
+        </div>
+        <div class="auth-card">
+          <h2>Log In</h2>
+          <p class="sub">Access your datasets and AI assistant</p>
+          <div class="notice error form-error hidden" data-error></div>
+          <form id="loginForm" novalidate>
+            <div class="form-group">
+              <label class="form-label" for="loginEmail">Email address</label>
+              <input type="email" class="form-input" id="loginEmail" name="email" autocomplete="email" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="loginPassword">Password</label>
+              <input type="password" class="form-input" id="loginPassword" name="password" autocomplete="current-password" required>
+            </div>
+            <div class="form-row"><span></span><button type="button" class="link" data-page="reset">Forgot password?</button></div>
+            <button type="submit" class="btn btn-primary btn-full">Log In →</button>
+          </form>
+          <div class="auth-footer">Don't have an account? <span data-page="signup">Start free</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═════════════ SIGNUP ═════════════ -->
+    <section class="page-view" id="view-signup">
+      <div class="signup-wrap">
+        <div class="auth-card">
+          <h2>Create your account</h2>
+          <p class="sub">Free forever plan. No card needed.</p>
+          <div class="notice error form-error hidden" data-error></div>
+          <form id="signupForm" novalidate>
+            <div class="form-group">
+              <label class="form-label" for="signupName">Full name</label>
+              <input type="text" class="form-input" id="signupName" name="name" autocomplete="name" maxlength="120" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="signupEmail">Work email</label>
+              <input type="email" class="form-input" id="signupEmail" name="email" autocomplete="email" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="signupPassword">Password</label>
+              <input type="password" class="form-input" id="signupPassword" name="password" autocomplete="new-password" minlength="8" maxlength="128" required>
+              <div class="form-hint">At least 8 characters.</div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full">Create account →</button>
+          </form>
+          <p class="form-hint">By signing up you agree to how we handle data, described on the <span class="link" data-page="privacy">privacy page</span>.</p>
+          <div class="auth-footer">Already have an account? <span data-page="login">Log in</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═════════════ PASSWORD RESET ═════════════ -->
+    <section class="page-view" id="view-reset">
+      <div class="signup-wrap">
+        <div class="auth-card" id="resetRequestCard">
+          <h2>Reset your password</h2>
+          <p class="sub">We'll email you a link that works for one hour.</p>
+          <div class="notice error form-error hidden" data-error></div>
+          <div class="notice ok form-error hidden" data-ok></div>
+          <form id="resetRequestForm" novalidate>
+            <div class="form-group">
+              <label class="form-label" for="resetEmail">Email address</label>
+              <input type="email" class="form-input" id="resetEmail" name="email" autocomplete="email" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full">Send reset link</button>
+          </form>
+          <div class="auth-footer"><span data-page="login">Back to log in</span></div>
+        </div>
+        <div class="auth-card hidden" id="resetConfirmCard">
+          <h2>Choose a new password</h2>
+          <p class="sub">You'll be signed out on every other device.</p>
+          <div class="notice error form-error hidden" data-error></div>
+          <form id="resetConfirmForm" novalidate>
+            <div class="form-group">
+              <label class="form-label" for="resetPassword">New password</label>
+              <input type="password" class="form-input" id="resetPassword" name="password" autocomplete="new-password" minlength="8" maxlength="128" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full">Save password</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═════════════ ASSISTANT DASHBOARD ═════════════ -->
+    <section class="page-view" id="view-assistant">
+      <div class="assistant-dashboard">
+        <div class="dash-topbar">
+          <div class="dash-user-badge">
+            <div class="dash-avatar" id="dashUserAvatar">J</div>
+            <div>
+              <div style="font-weight: 700;" id="dashUserName">Guest</div>
+              <div style="font-size: 0.8rem; color: var(--text-muted);" id="dashUserEmail">Viewing the public demo</div>
+            </div>
+          </div>
+          <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <span class="plan-tag" id="currentPlanBadge">DEMO</span>
+            <span class="small muted" id="quotaLabel"></span>
+            <button class="btn btn-ghost btn-sm hidden" id="upgradeBtn" data-action="open-payment">⚡ Upgrade to Pro</button>
+            <button class="btn btn-primary btn-sm" id="guestSignupBtn" data-page="signup">Sign up to use your data</button>
+          </div>
+        </div>
+
+        <div class="dataset-bar">
+          <div class="left">
+            <label class="small muted" for="datasetSelect">Dataset</label>
+            <select class="select" id="datasetSelect" aria-label="Dataset"></select>
+            <span class="small muted" id="datasetMeta"></span>
+          </div>
+          <div class="right">
+            <button class="btn btn-ghost btn-sm" data-action="export-csv">⬇ Export anomalies CSV</button>
+            <button class="btn btn-ghost btn-sm hidden" id="deleteDatasetBtn" data-action="delete-dataset">Delete dataset</button>
+            <button class="btn btn-primary btn-sm" data-action="open-upload">＋ Upload data</button>
+          </div>
+        </div>
+
+        <div class="metrics-row">
+          <div class="metric-card">
+            <div class="metric-label">Shipment records</div>
+            <div class="metric-value" id="mShipments">—</div>
+            <div class="metric-note" id="mShipmentsNote">&nbsp;</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Freight spend</div>
+            <div class="metric-value" id="mSpend">—</div>
+            <div class="metric-note" id="mSpendNote">&nbsp;</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Anomalous route-weeks</div>
+            <div class="metric-value" style="color: var(--secondary);" id="mAnomalies">—</div>
+            <div class="metric-note" id="mAnomaliesNote">&nbsp;</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Need human review</div>
+            <div class="metric-value" id="mReview">—</div>
+            <div class="metric-note" id="mReviewNote">No note explains them</div>
+          </div>
+        </div>
+
+        <div class="assistant-workspace">
+          <div class="chat-panel">
+            <div class="chat-header">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 1.2rem;">🤖</span>
+                <span>Jenius AI Assistant</span>
+              </div>
+              <div class="actions">
+                <span class="chat-status" id="chatStatus"></span>
+                <button class="btn btn-ghost btn-sm hidden" id="newChatBtn" data-action="new-chat">New chat</button>
+              </div>
+            </div>
+            <div class="chat-messages" id="chatMessages" aria-live="polite"></div>
+            <div class="chat-quick-prompts" id="quickPrompts">
+              <span class="quick-chip" data-ask="Give me a summary of all anomalies">📋 Summary</span>
+              <span class="quick-chip" data-ask="Which route-weeks need human review, and why?">⚠️ Needs review</span>
+              <span class="quick-chip" data-ask="Which transporters are the most expensive per tonne-km?">🚚 Carrier costs</span>
+              <span class="quick-chip" data-ask="Compare the average cost per tonne-km across all routes">📊 Compare routes</span>
+            </div>
+            <form class="chat-input-bar" id="chatForm">
+              <input type="text" class="chat-input" id="chatInput" maxlength="2000" placeholder="Ask about your shipments, routes, costs or anomalies…" autocomplete="off" aria-label="Your question">
+              <button type="submit" class="btn btn-primary" id="chatSend" style="padding: 10px 22px;">Send →</button>
+            </form>
+          </div>
+
+          <div class="insights-panel">
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+              <h3>Anomalies</h3>
+              <select class="select" id="anomalyFilter" aria-label="Filter anomalies">
+                <option value="all">All</option>
+                <option value="needs_review">Needs review</option>
+                <option value="justified">Justified</option>
+              </select>
+            </div>
+            <div class="anomaly-list" id="anomalyList"></div>
+            <p class="small muted">Click an anomaly to ask the assistant about it.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═════════════ PRICING ═════════════ -->
+    <section class="page-view" id="view-pricing">
+      <div class="pricing-wrap">
+        <h2>Simple, Honest Pricing</h2>
+        <p class="sub">Start free. Upgrade when your team needs more data and more questions.</p>
+        <div class="pricing-toggle">
+          <div class="p-toggle-btn active" data-cycle="monthly">Monthly</div>
+          <div class="p-toggle-btn" data-cycle="annual">Annual (save 30%)</div>
+        </div>
+        <div class="pricing-row">
+          <div class="p-card">
+            <h3>Starter</h3>
+            <div class="desc">For analysts trying Jenius on their own data.</div>
+            <div class="price">₹0 <span>/ month</span></div>
+            <ul class="p-features">
+              <li data-plan="free-datasets">3 datasets</li>
+              <li data-plan="free-rows">5,000 shipments per dataset</li>
+              <li data-plan="free-messages">25 Claude questions a day</li>
+              <li>Anomaly detection with note matching</li>
+              <li>Unlimited quick answers and CSV export</li>
+            </ul>
+            <button class="btn btn-ghost btn-full" data-page="signup">Get started free</button>
+          </div>
+          <div class="p-card featured">
+            <div class="featured-badge">MOST POPULAR</div>
+            <h3>Pro</h3>
+            <div class="desc">For logistics and finance teams auditing freight every week.</div>
+            <div class="price" id="proPriceValue">₹799 <span>/ month</span></div>
+            <ul class="p-features">
+              <li data-plan="pro-datasets">50 datasets</li>
+              <li data-plan="pro-rows">200,000 shipments per dataset</li>
+              <li data-plan="pro-messages">300 Claude questions a day</li>
+              <li>Review workflow: confirm or dismiss each spike</li>
+              <li>Priority help by email</li>
+            </ul>
+            <button class="btn btn-primary btn-full" data-action="open-payment">Get Pro →</button>
+          </div>
+          <div class="p-card">
+            <h3>Enterprise</h3>
+            <div class="desc">Higher limits, your own deployment, or a custom integration.</div>
+            <div class="price">Custom</div>
+            <ul class="p-features">
+              <li>Everything in Pro</li>
+              <li>Self-hosted on your cloud</li>
+              <li>Custom limits and data retention</li>
+              <li>Help connecting your TMS or ERP exports</li>
+            </ul>
+            <a class="btn btn-ghost btn-full" id="enterpriseContact" href="#">Contact us</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═════════════ ACCOUNT ═════════════ -->
+    <section class="page-view" id="view-account">
+      <div class="page-narrow">
+        <h2>Your account</h2>
+        <div class="panel">
+          <h3>Profile</h3>
+          <p id="accountSummary" class="muted"></p>
+          <div style="display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap;">
+            <button class="btn btn-ghost btn-sm" data-action="logout">Log out</button>
+            <button class="btn btn-primary btn-sm" data-action="open-payment" id="accountUpgradeBtn">⚡ Upgrade to Pro</button>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>Payments</h3>
+          <div id="paymentsList" class="small muted">No payments yet.</div>
+        </div>
+        <div class="panel">
+          <h3>Delete account</h3>
+          <p class="muted small" style="margin-bottom: 12px;">Permanently deletes your account, datasets and chats. This can't be undone.</p>
+          <div class="notice error form-error hidden" data-error></div>
+          <form id="deleteAccountForm" style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <input type="password" class="form-input" style="max-width: 280px;" name="password" placeholder="Your password" autocomplete="current-password" required aria-label="Your password">
+            <button type="submit" class="btn btn-danger btn-sm">Delete my account</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═════════════ ADMIN ═════════════ -->
+    <section class="page-view" id="view-admin">
+      <div class="page-narrow">
+        <h2>Admin</h2>
+        <div class="panel">
+          <h3>UPI payments waiting to be checked</h3>
+          <p class="small muted" style="margin-bottom: 12px;">Approve only after you see the payment with this UTR number in your bank or UPI app.</p>
+          <div id="adminPayments" class="small muted">Loading…</div>
+        </div>
+        <div class="panel">
+          <h3>Claude usage (last 30 days)</h3>
+          <div id="adminUsage" class="small muted">Loading…</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═════════════ PRIVACY ═════════════ -->
+    <section class="page-view" id="view-privacy">
+      <div class="page-narrow prose">
+        <h2>Privacy and your data</h2>
+        <p>This page explains, in plain words, what Jenius stores and why.</p>
+        <h3>What we store</h3>
+        <ul>
+          <li>Your name, email and a one-way hash of your password (never the password itself).</li>
+          <li>The shipment and context-note files you upload, and the anomalies found in them.</li>
+          <li>Your chats with the assistant, so you can read them again.</li>
+          <li>For each AI answer: which model ran, how many tokens it used and what it cost. This keeps the service affordable.</li>
+          <li>UPI transaction references you submit for payment, to match them against payments received.</li>
+        </ul>
+        <h3>Who can see it</h3>
+        <p>Only you can see your datasets and chats. The demo dataset is public. When you ask the AI assistant a question, your question and the parts of your dataset it looks up are sent to Anthropic's Claude API to write the answer. Quick answers never leave our server.</p>
+        <h3>Deleting your data</h3>
+        <p>You can delete a dataset from the assistant page, and your whole account (with every dataset and chat) from the account page, at any time.</p>
+        <h3>Contact</h3>
+        <p id="privacyContact">Questions? Reach the team that runs this service.</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- ═════════════ UPLOAD MODAL ═════════════ -->
+  <div class="qr-modal-overlay" id="uploadModal" role="dialog" aria-modal="true" aria-labelledby="uploadTitle">
+    <div class="qr-modal-card">
+      <button class="qr-close-btn" data-action="close-modal" aria-label="Close">✕</button>
+      <h3 id="uploadTitle" style="font-family: 'Syne', sans-serif; font-size: 1.4rem; margin-bottom: 6px;">Upload shipment data</h3>
+      <p class="small muted" style="margin-bottom: 16px;">CSV files, up to <span id="uploadMb">5</span> MB each. Jenius analyses them straight away.</p>
+      <div class="notice error form-error hidden" data-error></div>
+      <form id="uploadForm">
+        <div class="form-group">
+          <label class="form-label" for="uploadName">Dataset name</label>
+          <input class="form-input" id="uploadName" name="name" maxlength="120" required placeholder="e.g. Q3 2025 shipments">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="uploadShipments">Shipments CSV (required)</label>
+          <input class="form-input" type="file" id="uploadShipments" name="shipments" accept=".csv,text/csv" required>
+          <div class="form-hint">Columns: shipment_id, origin, destination, route_type, quantity_tonnes, distance_km, freight_cost_inr, shipment_date (YYYY-MM-DD). Optional: material, transporter.</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="uploadNotes">Context notes CSV (optional)</label>
+          <input class="form-input" type="file" id="uploadNotes" name="notes" accept=".csv,text/csv">
+          <div class="form-hint">Columns: note_id, date, applies_to (a route like Chennai-Bangalore, or "All Routes"), note.</div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full">Upload and analyse</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═════════════ PAYMENT MODAL ═════════════ -->
+  <div class="qr-modal-overlay" id="paymentModal" role="dialog" aria-modal="true" aria-labelledby="paymentTitle">
+    <div class="qr-modal-card">
+      <button class="qr-close-btn" data-action="close-modal" aria-label="Close">✕</button>
+      <div class="center">
+        <h3 id="paymentTitle" style="font-family: 'Syne', sans-serif; font-size: 1.5rem; margin-bottom: 4px;">Jenius Pro</h3>
+        <div class="pricing-toggle" style="margin: 10px 0 6px;">
+          <div class="p-toggle-btn active" data-cycle="monthly">Monthly</div>
+          <div class="p-toggle-btn" data-cycle="annual">Annual</div>
+        </div>
+        <div style="font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; color: var(--primary);" id="payAmount">₹799</div>
+        <div id="payReady">
+          <p class="small muted">Scan with Google Pay, PhonePe, Paytm or BHIM<span id="payUpi"></span></p>
+          <div class="qr-image-frame"><img id="payQr" alt="UPI QR code for paying Jenius Pro"></div>
+          <p style="margin-bottom: 14px;"><a class="btn btn-ghost btn-sm" id="payLink" href="#">Open in my UPI app</a></p>
+        </div>
+        <div id="payNotReady" class="notice warn hidden" style="margin: 14px 0;">Online payments aren't switched on yet. Please check back soon.</div>
+      </div>
+      <div class="notice error form-error hidden" data-error></div>
+      <div class="notice ok form-error hidden" data-ok></div>
+      <form id="paymentForm">
+        <div class="form-group">
+          <label class="form-label" for="payRef">UPI transaction ID (UTR)</label>
+          <input class="form-input" id="payRef" name="upi_reference" required minlength="8" maxlength="35" pattern="[A-Za-z0-9]+" placeholder="12-digit number from your payment app">
+          <div class="form-hint">After paying, copy the transaction ID from your UPI app. We check it against the payment we received, usually within a few hours, and then switch on Pro.</div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full">Submit payment for verification</button>
+      </form>
+    </div>
+  </div>
+
+  <footer>
+    <div>© 2026 Jenius. All rights reserved.</div>
+    <div><span class="link" data-page="assistant">AI Assistant</span> · <span class="link" data-page="pricing">Pricing</span> ·
+      <span class="link" data-page="privacy">Privacy</span></div>
+  </footer>
+</body>
+</html>

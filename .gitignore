@@ -7,9 +7,19 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.so
-.env
+.venv/
 venv/
 env/
+.pytest_cache/
+.ruff_cache/
+
+# Secrets and local data: never commit these
+.env
+data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
 
 # Temp files
 qr_base64.txt

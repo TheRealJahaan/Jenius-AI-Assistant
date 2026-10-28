@@ -1,0 +1,37 @@
+# Jenius and PostgreSQL on your own machine:  docker compose up --build   then open http://localhost:8000
+# Put your settings (for example ANTHROPIC_API_KEY and LLM_PROVIDER=anthropic) in .env; see .env.example.
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: jenius
+      POSTGRES_PASSWORD: jenius
+      POSTGRES_DB: jenius
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jenius -d jenius"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgresql://jenius:jenius@db:5432/jenius
+      # "production" insists on https, which localhost doesn't have. Use production on the real server.
+      JENIUS_ENV: development
+      PUBLIC_URL: http://localhost:8000
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:

@@ -15,8 +15,9 @@ import subprocess
 import sys
 from pathlib import Path
 
-OUTPUT = Path("/Users/jahaansuthar/Downloads/FreightTiger/output_anomalies.csv")
-SOLUTION = Path("/Users/jahaansuthar/Downloads/FreightTiger/solution.py")
+ROOT = Path(__file__).resolve().parent
+OUTPUT = ROOT / "output_anomalies.csv"
+SOLUTION = ROOT / "solution.py"
 
 # ── Labelled eval set (ground truth from manual inspection of notes + data) ──
 LABELLED = [
@@ -108,7 +109,7 @@ def main():
         "correctness": result,
         "overall_score_pct": round(score, 1)
     }
-    report_path = Path("/Users/jahaansuthar/Downloads/FreightTiger/eval_report.json")
+    report_path = ROOT / "eval_report.json"
     with open(report_path, "w") as f:
         json.dump(report, f, indent=2)
     print(f"\nReport written to: {report_path}")

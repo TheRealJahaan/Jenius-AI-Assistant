@@ -1,223 +1,115 @@
-# FreightTiger AI Intern — Case Study Solution
+# Jenius
 
-**Author:** Jahaan Suthar  
-**Language:** Python 3.x (stdlib only for `solution.py`)  
-**Total LLM calls:** 0  |  **Estimated cost:** $0.00
+**Freight cost intelligence with an AI analyst that shows its work.**
 
----
+Upload your shipment records. Jenius finds the route-weeks where cost per tonne-km jumped, checks each spike
+against your operations notes (floods, festival surcharges, diesel prices…), and answers questions about your
+data in plain English. Every number in an answer comes from your database, never from the model's imagination.
 
-## What I Built
+| | |
+| --- | --- |
+| **Anomaly engine** | Deterministic: a route-week is flagged only when it is ≥15% above both its own trailing 8-week average and same-type peer routes. Byte-identical output every run. |
+| **AI assistant** | Claude with 7 read-only database tools (overview, anomalies, weekly costs, route comparison, carrier breakdown, shipments, note search). Cites notes like `[N001]`. |
+| **Free fallback** | A built-in answer engine (no LLM, no cost) for visitors, for anyone over their daily quota, and whenever Claude is unreachable. |
+| **Database** | PostgreSQL in production (SQLite on a laptop), with Alembic migrations. |
+| **Accounts & billing** | Email + password (Argon2id), password reset by email, Free and Pro plans, UPI payments verified by an admin. |
 
-A **smart shipping cost monitor** that:
-1. Groups shipment records by route and week, computes cost per tonne-km
-2. Flags anomalous route-weeks using two spec-exact comparison baselines
-3. Matches each anomaly against context notes using a weighted heuristic + net-score approach
-4. Explains each finding in plain English, grounded in actual note content
-5. Exposes a conversational AI assistant (`assistant.py` + `index.html`) for plain-English Q&A
+The deterministic core started as the FreightTiger AI-intern case study; that write-up is in
+[docs/CASE_STUDY.md](docs/CASE_STUDY.md).
 
----
+## Quick start (your laptop)
 
-## File Layout
-
-```
-FreightTiger/
-├── solution.py          # Core anomaly detection (deterministic, no LLM)
-├── assistant.py         # CLI Q&A assistant (TF-IDF RAG, no LLM)
-├── index.html           # Browser chat UI (dark mode, embedded RAG)
-├── eval_harness.py      # Reproducibility + correctness eval
-├── output_anomalies.csv # Final output (matches sample_output_format_v2.csv)
-├── token_cost_log.json  # Cost log for solution.py run
-├── eval_report.json     # Eval harness results
-└── AI Intern Case Study/
-    ├── shipment_records.csv
-    ├── context_notes.csv
-    └── sample_output_format_v2.csv
-```
-
----
-
-## How to Run
+You need Python 3.11 or newer.
 
 ```bash
-# 1. Generate output CSV
-python3 solution.py
-
-# 2. Run eval (reproducibility + correctness)
-python3 eval_harness.py
-
-# 3. CLI assistant (interactive)
-python3 assistant.py
-
-# 4. Single query
-python3 assistant.py --query "Why did Chennai-Bangalore get pricier in Feb 2025?"
-
-# 5. Chat UI — open in browser
-open index.html
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements-dev.txt
+cp .env.example .env              # works as-is: SQLite + the free answer engine
+python -m jenius init-db          # creates the tables and loads the public demo dataset
+python -m jenius serve --reload   # http://127.0.0.1:8000
 ```
 
----
+To use Claude, set `LLM_PROVIDER=anthropic` and `ANTHROPIC_API_KEY=...` in `.env` (get a key at
+[platform.claude.com](https://platform.claude.com/settings/keys)).
 
-## Core Logic (solution.py)
+**With Docker and PostgreSQL instead:**
 
-### Step 1 — Weekly CPTK
-
-For every shipment, compute:
-```
-cost_per_tonne_km = freight_cost_inr / (quantity_tonnes × distance_km)
-```
-Group by `(origin-destination, Monday-of-week)`, take the weekly mean.
-
-### Step 2 — Comparison Baselines (spec-exact)
-
-| Baseline | Definition |
-|---|---|
-| **vs own history** | Trailing **8-week** rolling average of weekly mean CPTK, using only weeks **strictly before** the current week. If fewer than 8 prior weeks exist, all available prior weeks are used (noted below). |
-| **vs similar routes** | Mean CPTK across **all other routes sharing the same `route_type`** that same week. The route itself is **excluded** from its own peer average. |
-
-**Short-window note (per spec):** The dataset starts in January 2024. Routes with fewer than 8 prior weeks (i.e., the first 7 weeks of data, Jan–Feb 2024) use all available prior weeks and are labelled accordingly in the output (e.g., `trailing 3-week avg`). No padding or extrapolation is done.
-
-### Step 3 — Flagging
-
-A route-week is flagged as anomalous only when **both** thresholds are exceeded:
-- `pct_vs_own_history ≥ 15%`
-- `pct_vs_similar_routes ≥ 15%`
-
-Both thresholds are required simultaneously to reduce false positives from route-specific volatility or market-wide shifts that affect all routes equally.
-
-### Step 4 — Note Matching
-
-For each anomaly, context notes are filtered by:
-1. **Route match**: `applies_to == "All Routes"` or exact route label match (case-insensitive, normalised)
-2. **Date window**: Note date within ±60 days of the anomalous week
-
-Candidate notes are then scored by a **net-score heuristic** to determine if the note genuinely explains a cost _increase_:
-
-```python
-positive_signals = [flood, flooding, surcharge, disrupted, detour, diesel, ...]
-negative_signals = [returned to normal, remained stable, no major disruption, ...]
-
-net_score = positive_score - negative_score
-explains_cost_rise = net_score > 0
+```bash
+docker compose up --build         # http://localhost:8000
 ```
 
-This approach correctly handles edge cases like **N001** (contains "passable again by Mar 9" as a postscript but is predominantly about flooding → net positive → `True`) vs **N009** (purely a resolution note → no positives, strong negatives → `False`).
+## Going live
 
-The note **closest in date** to the anomalous week is selected as the match.
+The repository deploys as one container plus a managed PostgreSQL database. The quickest route is Render:
+**New → Blueprint → this repository** reads [render.yaml](render.yaml) and asks for your Claude key, UPI ID
+and email settings. Any host that runs a Dockerfile works (Railway, Fly.io, a VPS); the container runs the
+database migrations itself on start.
 
-**Hallucination guardrails:**
-- No note → `unexplained` (never fabricates a reason)
-- Resolution notes (roads back to normal) cannot justify an ongoing spike
-- Stable-market notes cannot justify a cost rise
-- Every `matched_note_id` is directly traceable to a row in `context_notes.csv`
+Read **[docs/DEPLOY.md](docs/DEPLOY.md)** before you launch: it is the checklist of settings, the first admin
+account, backups and what to watch.
 
----
-
-## AI Assistant (assistant.py + index.html)
-
-### Architecture
+## How it works
 
 ```
-User Query
-    ↓
-TF-IDF Cosine Similarity
-    ↓ (retrieve relevant notes)
-Structured Anomaly Data
-    ↓ (grounded answer builder)
-Plain-English Response
+Browser (web/: HTML + CSS + JS, strict CSP)
+   │  JSON over HTTPS, session cookie (HttpOnly, SameSite=Lax)
+   ▼
+FastAPI app (jenius/api)
+   ├─ auth        sign-up, log in, reset password, delete account
+   ├─ datasets    CSV upload → validation → PostgreSQL → anomaly engine (jenius/analysis.py)
+   ├─ chat        Claude agent loop (jenius/assistant/agent.py) ──► read-only tools on this dataset only
+   │              or the free answer engine (jenius/assistant/offline.py)
+   ├─ billing     UPI QR + transaction reference → admin approves → Pro
+   └─ admin       pending payments, Claude cost per day
+   ▼
+PostgreSQL: users, sessions, datasets, shipments, context_notes, anomalies,
+            conversations, messages, llm_calls (tokens + cost of every call), payments
 ```
 
-**No LLM is used.** The assistant combines:
-- A TF-IDF vector store over `context_notes.csv` for semantic retrieval
-- Structured query routing (route/date extraction via regex)
-- Template-based answer generation from actual anomaly data
+Design choices worth knowing:
 
-This guarantees:
-- ✅ **Zero hallucination** — every sentence is sourced from real data
-- ✅ **Zero cost** — no API calls
-- ✅ **Full reproducibility** — same query always yields same answer
+- **Claude can only read, and only the dataset in front of it.** The server binds every tool to one dataset;
+  the model never chooses whose data it sees, so a malicious note in an upload can't reach anyone else.
+- **Conversation history is append-only.** Each finished turn is stored exactly as Claude saw it (thinking
+  blocks and tool calls included) and replayed unchanged. A failed turn is shown but never replayed.
+- **The bill is protected.** Claude messages are counted per person per day in the database (25 on Free,
+  300 on Pro by default); past the limit people get the free engine instead. Every call's tokens and cost are
+  logged in `llm_calls`; `python -m jenius usage` and the admin page show them.
+- **Refusals fall back automatically.** Requests use the API's server-side fallback (`fallbacks: "default"`)
+  so a declined request is retried on Anthropic's recommended model.
 
-### Example Q&A
+## Day-to-day commands
 
-```
-You: Why did Chennai-Bangalore get pricier in February 2025?
+| Command | What it does |
+| --- | --- |
+| `python -m jenius init-db` | Apply migrations and load the demo dataset (safe to re-run) |
+| `python -m jenius serve` | Run the web app |
+| `python -m jenius make-admin you@example.com` | Let an account approve payments and see usage |
+| `python -m jenius payments` / `approve ID` / `reject ID` | Check UPI payments from the terminal |
+| `python -m jenius usage` | Claude calls, tokens and cost per day |
+| `python -m jenius ask "Why did Chennai-Bangalore get pricier?"` | Ask about the demo dataset from the terminal |
+| `python solution.py` / `python eval_harness.py` | Regenerate and verify the case-study output |
 
-AI: Chennai-Bangalore — Week of 2025-02-24
-    - Cost per tonne-km: ₹3.59
-    - vs own history: +28.3% vs this route's trailing 8-week avg
-    - vs similar routes: +20.5% vs similar-length routes this week
-    - Verdict: ✅ Justified
+## Upload format
 
-    Supporting evidence — Note N001 (2025-02-24):
-    > Heavy flooding on the Chennai-Bangalore highway disrupted normal truck 
-      movement from Feb 24 to Mar 8, forcing longer detours and higher trip costs.
-```
+**Shipments CSV** (required): `shipment_id, origin, destination, route_type, quantity_tonnes, distance_km,
+freight_cost_inr, shipment_date` (YYYY-MM-DD), optionally `material, transporter`.
+**Context notes CSV** (optional): `note_id, date, applies_to` (a route such as `Chennai-Bangalore`, or
+`All Routes`), `note`. Bad rows are reported with their line numbers; nothing is silently skipped.
 
----
+## Checks
 
-## Reproducibility
-
-Three independent runs of `solution.py` on the same input produce **byte-for-byte identical** output:
-
-```
-Run 1: SHA-256 = 37c4118c2fc511f3…
-Run 2: SHA-256 = 37c4118c2fc511f3…
-Run 3: SHA-256 = 37c4118c2fc511f3…
-✅ All 3 runs produced identical output
-```
-
-**Why it's deterministic:**
-- No random seeds, no LLM temperature, no external state
-- All comparisons are pure arithmetic on sorted, filtered data
-- Note matching is a pure function of note text + date arithmetic
-
----
-
-## Eval Harness
-
-`eval_harness.py` provides:
-1. **Reproducibility check** — runs `solution.py` 3× and compares SHA-256 hashes
-2. **Correctness eval** — scores output against a 5-row labelled ground truth
-
-```
-Reproducibility: ✅ PASS
-Correctness:     100% (5/5 cases)
+```bash
+ruff check .
+python -m pytest                                                   # SQLite
+JENIUS_TEST_DATABASE_URL=postgresql://... python -m pytest         # PostgreSQL
+python eval_harness.py                                             # case-study reproducibility + accuracy
 ```
 
-The labelled set covers:
-- 1 festival-surcharge justified case (Ahmedabad-Mumbai)
-- 3 flooding-justified cases (Chennai-Bangalore Feb/Mar 2025)
-- 2 unexplained cases (Delhi-Jaipur Nov 2024)
+The tests need no API key: Claude is replaced by a scripted fake built from the SDK's own message types.
+CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs all of the above against PostgreSQL 17 and
+builds the container.
 
----
+## Security
 
-## Token / Cost Log
-
-| Component | LLM Calls | Input Tokens | Output Tokens | Cost |
-|---|---|---|---|---|
-| `solution.py` (core) | 0 | 0 | 0 | $0.00 |
-| `assistant.py` (RAG) | 0 | 0 | 0 | $0.00 |
-| **Total** | **0** | **0** | **0** | **$0.00** |
-
-The TF-IDF retrieval model runs entirely in Python stdlib with no external API calls. Embeddings are computed from scratch using term frequency + inverse document frequency arithmetic.
-
----
-
-## Design Decisions & Trade-offs
-
-| Decision | Why |
-|---|---|
-| **No LLM in core logic** | The spec rewards trust and reproducibility. A deterministic system can be audited line by line. LLMs add cost, variability, and hallucination risk for a task that's fully expressible as arithmetic + rule matching. |
-| **Net-score heuristic** over hard veto | A hard veto on "passable again" would incorrectly reject N001 (flooding note with a postscript). Net scoring lets strong positive signals override incidental resolution phrases. |
-| **Both thresholds required** | Requiring both `vs_own` ≥15% AND `vs_peers` ≥15% reduces false positives: a market-wide cost rise (e.g., diesel prices) shifts all routes equally, so `vs_peers` stays near 0% and won't trigger. |
-| **±60 day note window** | Generous enough to capture slow-developing events (flooding aftermath, festival periods) while avoiding spurious matches to notes months away. |
-| **TF-IDF over embeddings** | Fully deterministic, no GPU, no API key, zero cost. For 10 notes, TF-IDF cosine similarity is more than sufficient. |
-
----
-
-## How I Convinced Myself It Was Right
-
-1. **Manual verification**: Cross-checked every anomaly row against raw `shipment_records.csv` by recomputing CPTK by hand for sample rows.
-2. **Rolling window audit**: Printed the prior-week list and rolling mean for each anomaly; confirmed `strictly before` semantics hold.
-3. **Note matching audit**: Spot-checked each `matched_note_id` against the note text and date — all match. Confirmed N009 (resolution note) is correctly rejected for the Chennai-Bangalore Mar 10 week.
-4. **Eval harness**: 100% (5/5) on labelled ground truth, 3/3 identical hashes.
-5. **Peer exclusion audit**: Verified the `peer_avg()` function excludes the route itself by printing peer lists for each anomaly.
+See [SECURITY.md](SECURITY.md).

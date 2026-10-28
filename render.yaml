@@ -1,0 +1,44 @@
+# Render Blueprint: one web service (this Dockerfile) and a managed PostgreSQL database.
+# Render > New > Blueprint > pick this repository. It asks for the values marked sync: false.
+# Plan names and prices change; check https://render.com/pricing before you apply.
+services:
+  - type: web
+    name: jenius
+    runtime: docker
+    plan: starter
+    healthCheckPath: /readyz
+    autoDeploy: true
+    envVars:
+      - key: JENIUS_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: jenius-db
+          property: connectionString
+      - key: LLM_PROVIDER
+        value: anthropic
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: ANTHROPIC_MODEL
+        value: claude-opus-5-5
+      - key: UPI_ID
+        sync: false
+      - key: SUPPORT_EMAIL
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+      # PUBLIC_URL defaults to Render's own https://<name>.onrender.com address.
+      # Set it when you add your own domain.
+
+databases:
+  - name: jenius-db
+    databaseName: jenius
+    user: jenius
+    plan: basic-256mb
+    postgresMajorVersion: "17"

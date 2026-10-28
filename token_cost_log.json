@@ -4,5 +4,5 @@
   "input_tokens": 0,
   "output_tokens": 0,
   "estimated_cost_usd": "$0.00",
-  "note": "solution.py is fully deterministic \u2014 zero LLM invocations. The conversational AI assistant (assistant.py) uses free-tier embeddings; its token log is written separately by assistant.py."
+  "note": "solution.py is fully deterministic \u2014 zero LLM invocations. The Jenius web assistant logs every Claude call with its tokens and cost in the llm_calls table."
 }
